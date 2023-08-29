@@ -17,5 +17,10 @@ namespace CommandPattern.WebApp.Commands
 
             return new FileContentResult(excelMemoryStream.ToArray(), excelFile.FileType){FileDownloadName = excelFile.FileName};
         }
+
+        public IActionResult Execute()
+        {
+            throw new NotImplementedException();
+        }
     }
 }

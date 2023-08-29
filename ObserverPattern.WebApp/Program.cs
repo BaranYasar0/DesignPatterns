@@ -1,6 +1,9 @@
+using System.Reflection;
 using BaseProject.Models;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using ObserverPattern.WebApp.Models;
+using ObserverPattern.WebApp.Observer;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -17,8 +20,20 @@ builder.Services.AddIdentity<AppUser, IdentityRole>(x =>
     x.User.RequireUniqueEmail = true;
 }).AddEntityFrameworkStores<AppIdentityDbContext>();
 
+builder.Services.AddSingleton<UserObserverSubject>(sp =>
+{
+    UserObserverSubject subject = new UserObserverSubject();
+    subject.RegisterObserver(new UserObserverWriteToConsole(sp));
+    subject.RegisterObserver(new UserObserverCreatedDiscount(sp));
+    subject.RegisterObserver(new UserObserverSendEmail(sp));
+    
+    return subject;
+});
 
-
+builder.Services.AddMediatR(x =>
+{
+    x.RegisterServicesFromAssembly(Assembly.GetExecutingAssembly());
+});
 
 var app = builder.Build();
 

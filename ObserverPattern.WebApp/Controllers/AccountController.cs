@@ -1,6 +1,10 @@
 ﻿using BaseProject.Models;
+using MediatR;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using ObserverPattern.WebApp.Events;
+using ObserverPattern.WebApp.Models;
+using ObserverPattern.WebApp.Observer;
 
 namespace BaseProject.Controllers
 {
@@ -8,10 +12,15 @@ namespace BaseProject.Controllers
     {
         private readonly UserManager<AppUser> userManager;
         private readonly SignInManager<AppUser> signInManager;
-        public AccountController(UserManager<AppUser> userManager, SignInManager<AppUser> signInManager)
+        private readonly UserObserverSubject userObserverSubject;
+        private readonly IMediator mediator;
+
+        public AccountController(UserManager<AppUser> userManager, SignInManager<AppUser> signInManager, UserObserverSubject userObserverSubject, IMediator mediator)
         {
             this.userManager = userManager;
             this.signInManager = signInManager;
+            this.userObserverSubject = userObserverSubject;
+            this.mediator = mediator;
         }
 
         public IActionResult Login()
@@ -37,6 +46,40 @@ namespace BaseProject.Controllers
         {
             await signInManager.SignOutAsync();
             return RedirectToAction(nameof(HomeController.Index),"Home");
+        }
+
+        public IActionResult SignUp()
+        {
+            return View();
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> SignUp(UserCreateViewModel model)
+        {
+            AppUser user= new AppUser
+            {
+                UserName = model.UserName,
+                Email = model.Email,
+            };
+
+            var result = await userManager.CreateAsync(user, model.Password);
+
+            if(result.Succeeded)
+            {
+                //userObserverSubject.NotifyObservers(user);
+                await mediator.Publish(new UserCreatedEvent(){AppUser = user});
+                
+                ViewBag.message = "Üyelik işlemi gerçekleşti.";
+                await signInManager.SignInAsync(user, true);
+                return View();
+            }
+            else
+            {
+                ViewBag.message = result.Errors.ToList().First().Description;
+                return View();
+            }
+            
+
         }
     }
 }

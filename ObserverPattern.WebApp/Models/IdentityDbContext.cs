@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using ObserverPattern.WebApp.Models;
 
 namespace BaseProject.Models
 {
@@ -8,6 +9,6 @@ namespace BaseProject.Models
         {
         }
 
-
+        public DbSet<Discount> Discounts { get; set; }
     }
 }
